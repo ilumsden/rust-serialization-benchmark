@@ -164,8 +164,8 @@ fn avro_serde_timer(iterations: u64) -> TestResult {
             "type": "record",
             "name": "test",
             "fields": [
-                {"name": "ids", "type": "array", "items": "long"},
-                {"name": "strings", "type": "array", "items": "string"}
+                {"name": "ids", "type": {"type": "array", "items": "long"}},
+                {"name": "strings", "type": {"type": "array", "items": "string"}}
             ]
         }
     "#;
@@ -230,7 +230,14 @@ fn main() {
     res_vec.push(ron_serde_timer(iterations));
     println!("Running Avro test");
     res_vec.push(avro_serde_timer(iterations));
+    let mut wrt = csv::Writer::from_path("rust_serialization_benchmark.csv").unwrap();
+    wrt.write_record(&["Name", "Version", "Iterations", "Size", "Time"]).unwrap();
     for v in res_vec.iter() {
-        println!("Name: {}, Version: {}, Size: {} bytes, Time: {} ms", v.name, v.version, v.size, v.time);
+        wrt.write_field(&v.name).unwrap();
+        wrt.write_field(&v.version).unwrap();
+        wrt.write_field(iterations.to_string()).unwrap();
+        wrt.write_field(v.size.to_string()).unwrap();
+        wrt.write_field(v.time.to_string()).unwrap();
+        wrt.write_record(None::<&[u8]>).unwrap();
     }
 }
